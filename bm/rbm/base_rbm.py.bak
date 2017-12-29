@@ -379,7 +379,7 @@ class BaseRBM(EnergyBasedModel):
 
     def _make_gibbs_chain_fixed(self, h_states):
         v_states = v_means = h_means = None
-        for _ in range(self.n_gibbs_steps[0]):
+        for _ in xrange(self.n_gibbs_steps[0]):
             v_states, v_means, h_states, h_means = self._make_gibbs_step(h_states)
         return v_states, v_means, h_states, h_means
 
@@ -542,12 +542,12 @@ class BaseRBM(EnergyBasedModel):
 
         # prepend name of the scope, and append ':0'
         feed_dict = {}
-        for k, v in list(d.items()):
+        for k, v in d.items():
             feed_dict['input_data/{0}:0'.format(k)] = v
         return feed_dict
 
     def _train_epoch(self, X):
-        results = [[] for _ in range(len(self._train_metrics_map))]
+        results = [[] for _ in xrange(len(self._train_metrics_map))]
         for X_batch in batch_iter(X, self.batch_size,
                                   verbose=self.verbose):
             self.iter_ += 1
@@ -567,11 +567,11 @@ class BaseRBM(EnergyBasedModel):
                                      feed_dict=self._make_tf_feed_dict(X_batch))
 
         # aggregate and return metrics values
-        results = [np.mean(r) if r else None for r in results]
-        return dict(list(zip(sorted(self._train_metrics_map), results)))
+        results = map(lambda r: np.mean(r) if r else None, results)
+        return dict(zip(sorted(self._train_metrics_map), results))
 
     def _run_val_metrics(self, X_val):
-        results = [[] for _ in range(len(self._val_metrics_map))]
+        results = [[] for _ in xrange(len(self._val_metrics_map))]
         for X_vb in batch_iter(X_val, batch_size=self.batch_size):
             run_ops = [v for _, v in sorted(self._val_metrics_map.items())]
             values = \
@@ -587,7 +587,7 @@ class BaseRBM(EnergyBasedModel):
                                                            simple_value=results[i]))
         val_s = summary_pb2.Summary(value=summary_value)
         self._tf_val_writer.add_summary(val_s, self.iter_)
-        return dict(list(zip(sorted(self._val_metrics_map), results)))
+        return dict(zip(sorted(self._val_metrics_map), results))
 
     def _run_feg(self, X, X_val):
         """Calculate difference between average free energies of subsets
@@ -600,14 +600,14 @@ class BaseRBM(EnergyBasedModel):
         self._free_energy_op = tf.get_collection('free_energy_op')[0]
 
         train_fes = []
-        for _, X_b in zip(range(self.metrics_config['n_batches_for_feg']),
+        for _, X_b in zip(xrange(self.metrics_config['n_batches_for_feg']),
                           batch_iter(X, batch_size=self.batch_size)):
             train_fe = self._tf_session.run(self._free_energy_op,
                                             feed_dict=self._make_tf_feed_dict(X_b))
             train_fes.append(train_fe)
 
         val_fes = []
-        for _, X_vb in zip(range(self.metrics_config['n_batches_for_feg']),
+        for _, X_vb in zip(xrange(self.metrics_config['n_batches_for_feg']),
                            batch_iter(X_val, batch_size=self.batch_size)):
             val_fe = self._tf_session.run(self._free_energy_op,
                                           feed_dict=self._make_tf_feed_dict(X_vb))
@@ -680,7 +680,7 @@ class BaseRBM(EnergyBasedModel):
         self._dhb_init = grads_accumulators['dhb']
 
         # copy attributes
-        for k, v in list(vars(rbm).items()):
+        for k, v in vars(rbm).items():
             if is_attribute_name(k):
                 setattr(self, k, v)
 
